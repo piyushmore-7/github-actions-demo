@@ -1,0 +1,36 @@
+# =============================================
+# LESSON 1: Your First Workflow
+# =============================================
+# This is the simplest possible workflow.
+# It runs on every push and just prints a message.
+#
+# 👉 WHAT YOU'LL LEARN:
+#    - Basic workflow structure
+#    - Triggers (on: push)
+#    - Jobs and steps
+# =============================================
+
+name: "1️⃣ Lesson 1 - Hello World"
+
+on: push    # 👈 Runs every time you push code
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest    # 👈 GitHub gives you a free Ubuntu VM
+    steps:
+      - name: Say Hello
+        run: echo "🎉 Hello! GitHub Actions is running!"
+
+      - name: Show system info
+        run: |
+          echo "📅 Date: $(date)"
+          echo "💻 OS: $(uname -a)"
+          echo "📦 Node: $(node --version)"
+          echo "🏠 Working dir: $(pwd)"
+
+      - name: Show GitHub context
+        run: |
+          echo "📂 Repo: ${{ github.repository }}"
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "👤 Pushed by: ${{ github.actor }}"
+          echo "📝 Commit: ${{ github.sha }}"

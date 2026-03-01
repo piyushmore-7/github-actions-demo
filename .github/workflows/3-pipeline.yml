@@ -1,0 +1,90 @@
+# =============================================
+# LESSON 3: Multi-Job Pipeline
+# =============================================
+# Real projects have multiple stages:
+#   lint → test → build → deploy
+# Each job runs on a SEPARATE VM.
+# Jobs can depend on each other with "needs".
+#
+# 👉 WHAT YOU'LL LEARN:
+#    - Multiple jobs
+#    - Job dependencies (needs)
+#    - Conditional jobs (if)
+#    - Artifacts (passing files between jobs)
+# =============================================
+
+name: "3️⃣ Lesson 3 - Pipeline"
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # ---- JOB 1: Lint ----
+  lint:
+    name: "🔍 Lint Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run lint
+        run: npm run lint
+
+  # ---- JOB 2: Test (runs AFTER lint passes) ----
+  test:
+    name: "🧪 Run Tests"
+    needs: lint              # 👈 Waits for lint to complete
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Run tests
+        run: npm test
+
+  # ---- JOB 3: Build (runs AFTER test passes) ----
+  build:
+    name: "🔨 Build"
+    needs: test              # 👈 Waits for test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build project
+        run: npm run build
+
+      # Save the build output so other jobs can use it
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/        # 👈 This folder gets saved
+
+  # ---- JOB 4: Deploy (only on main branch) ----
+  deploy:
+    name: "🚀 Deploy"
+    needs: build
+    runs-on: ubuntu-latest
+    # 👇 Only run this job on main branch, not on PRs
+    if: github.ref == 'refs/heads/main'
+    steps:
+      # Download the build artifact from previous job
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+
+      - name: Show build contents
+        run: |
+          echo "📦 Build artifacts:"
+          ls -la dist/
+          echo ""
+          echo "📋 Build info:"
+          cat dist/build-info.json
+
+      - name: Simulate deployment
+        run: |
+          echo "🚀 Deploying to production..."
+          echo "   (In real life, this would run: cf deploy, kubectl apply, etc.)"
+          sleep 2
+          echo "✅ Deployment complete!"

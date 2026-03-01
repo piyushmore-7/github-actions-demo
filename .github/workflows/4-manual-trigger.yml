@@ -1,0 +1,106 @@
+# =============================================
+# LESSON 4: Manual Trigger & Secrets
+# =============================================
+# This workflow runs ONLY when you manually click
+# "Run workflow" in the GitHub Actions tab.
+# It also shows how secrets and inputs work.
+#
+# 👉 WHAT YOU'LL LEARN:
+#    - workflow_dispatch (manual trigger)
+#    - Input parameters
+#    - Using secrets
+#    - Environment variables
+# =============================================
+
+name: "4️⃣ Lesson 4 - Manual Trigger"
+
+on:
+  workflow_dispatch:          # 👈 Manual trigger only
+    inputs:
+      # These create form fields in the GitHub UI!
+      environment:
+        description: "Which environment to deploy to?"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
+
+      run_tests:
+        description: "Run tests first?"
+        required: true
+        default: true
+        type: boolean
+
+      message:
+        description: "Deployment note"
+        required: false
+        type: string
+
+jobs:
+  info:
+    name: "📋 Show Inputs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display what was selected
+        run: |
+          echo "==========================================="
+          echo "  Manual Workflow Triggered!"
+          echo "==========================================="
+          echo ""
+          echo "🌍 Environment: ${{ inputs.environment }}"
+          echo "🧪 Run tests:   ${{ inputs.run_tests }}"
+          echo "📝 Message:      ${{ inputs.message || '(none)' }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo ""
+
+  test:
+    name: "🧪 Test"
+    needs: info
+    # 👇 This job only runs IF the user checked "Run tests"
+    if: inputs.run_tests == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm test
+
+  deploy:
+    name: "🚀 Deploy to ${{ inputs.environment }}"
+    needs: [info, test]
+    # 👇 Run even if test was skipped (because user unchecked it)
+    if: always() && !failure()
+    runs-on: ubuntu-latest
+
+    # 👇 Environment-level secrets and protection rules
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy
+        # 👇 HOW TO USE SECRETS:
+        # 1. Go to repo Settings → Secrets → Actions
+        # 2. Add a secret named "DEPLOY_TOKEN"
+        # 3. It's masked in logs (shows ****)
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          echo "🚀 Deploying to ${{ inputs.environment }}..."
+
+          if [ -z "$DEPLOY_TOKEN" ]; then
+            echo "⚠️  No DEPLOY_TOKEN secret found."
+            echo "   To test secrets:"
+            echo "   1. Go to repo Settings → Secrets → Actions"
+            echo "   2. Add secret: DEPLOY_TOKEN = my-secret-123"
+            echo "   3. Run this workflow again"
+            echo ""
+            echo "   (Continuing without token for demo...)"
+          else
+            echo "✅ DEPLOY_TOKEN is set (value is hidden)"
+          fi
+
+          echo ""
+          echo "📦 Deploying..."
+          sleep 2
+          echo "✅ Deployed to ${{ inputs.environment }}!"

@@ -1,0 +1,76 @@
+# =============================================
+# LESSON 5: Debugging Failed Workflows
+# =============================================
+# This workflow has an INTENTIONAL BUG.
+# Your task: find the bug, fix it, push again.
+# This teaches you the debug cycle.
+#
+# 👉 WHAT YOU'LL LEARN:
+#    - Reading error logs in Actions tab
+#    - The fix → push → check cycle
+#    - continue-on-error
+#    - Status check functions (success, failure, always)
+# =============================================
+
+name: "5️⃣ Lesson 5 - Debug Challenge"
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  debug-challenge:
+    name: "🐛 Find & Fix the Bug"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # This step will PASS
+      - name: Step 1 - This works fine
+        run: echo "✅ Step 1 passed"
+
+      # 🐛 THIS STEP HAS A BUG!
+      # It tries to run a file that doesn't exist.
+      # Go to the Actions tab → click the failed run → read the error.
+      # Then fix it and push again!
+      - name: Step 2 - This has a bug!
+        run: node src/missing-file.js
+        # ^^^ FIX: Change to "node src/index.js" or remove this step
+
+      # This step won't run because Step 2 fails
+      - name: Step 3 - Never reaches here
+        run: echo "You'll see this after fixing Step 2!"
+
+      # But THIS step runs even if previous steps fail
+      - name: Cleanup (always runs)
+        if: always()          # 👈 Runs regardless of pass/fail
+        run: |
+          echo "🧹 Cleanup step - I always run!"
+          echo "Workflow status: ${{ job.status }}"
+
+  # This job shows how to handle expected failures
+  error-handling-demo:
+    name: "🛡️ Error Handling"
+    runs-on: ubuntu-latest
+    steps:
+      - name: This might fail (and that's OK)
+        id: risky_step
+        continue-on-error: true    # 👈 Don't fail the job
+        run: |
+          echo "Attempting risky operation..."
+          exit 1    # Simulates failure
+
+      - name: Check if previous step failed
+        run: |
+          if [ "${{ steps.risky_step.outcome }}" == "failure" ]; then
+            echo "⚠️ Previous step failed, but we handled it!"
+            echo "We can do fallback logic here."
+          else
+            echo "✅ Previous step succeeded!"
+          fi
+
+      - name: This runs because we used continue-on-error
+        run: echo "✅ Workflow continues despite the error above!"

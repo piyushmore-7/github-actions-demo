@@ -1,0 +1,48 @@
+# =============================================
+# LESSON 2: Run Tests Automatically
+# =============================================
+# This workflow checks out your code and runs tests.
+# If tests fail, the workflow fails (red ❌ in GitHub).
+# If tests pass, you get a green ✅.
+#
+# 👉 WHAT YOU'LL LEARN:
+#    - actions/checkout (getting your code)
+#    - actions/setup-node (setting up Node.js)
+#    - Running npm scripts
+#    - Seeing pass/fail status
+# =============================================
+
+name: "2️⃣ Lesson 2 - Run Tests"
+
+on:
+  push:
+    branches: [main]      # 👈 Only on main branch
+  pull_request:
+    branches: [main]      # 👈 Also on PRs to main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Get your code into the runner VM
+      # Without this, the VM is empty!
+      - name: Checkout code
+        uses: actions/checkout@v4    # 👈 This is a "pre-built action"
+
+      # Step 2: Set up Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18           # 👈 Specify version
+
+      # Step 3: Show what we have
+      - name: List files
+        run: |
+          echo "📂 Files in repo:"
+          ls -la
+
+      # Step 4: Run the tests
+      - name: Run tests
+        run: npm test                # 👈 Runs "node tests/run-tests.js"
+        # If tests exit with code 1, this step FAILS
+        # and the whole workflow shows ❌
