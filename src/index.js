@@ -4,7 +4,9 @@
 // =============================================
 
 function addClient(clients, client) {
-  
+  if (!client.name || !client.email) {
+    throw new Error("Client must have name and email");
+  }
   const newClient = {
     id: clients.length + 1,
     name: client.name,
