@@ -37,7 +37,7 @@ jobs:
       # Go to the Actions tab → click the failed run → read the error.
       # Then fix it and push again!
       - name: Step 2 - This has a bug!
-        run: node src/missing-file.js
+        run: node src/index.js
         # ^^^ FIX: Change to "node src/index.js" or remove this step
 
       # This step won't run because Step 2 fails
